@@ -109,7 +109,7 @@ module.exports.create = function(config) {
 			}).then(function(resp) {
 				resp = resp.body;
 				if (resp && resp.domain_record && resp.domain_record.type === type) {
-					return true;
+					return resp;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
 			});
@@ -156,7 +156,7 @@ module.exports.create = function(config) {
 			}).then(function(resp) {
 				resp = resp.body;
 				if (resp && resp.domain_record && resp.domain_record.type === 'CAA') {
-					return true;
+					return resp;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
 			});
@@ -187,7 +187,7 @@ module.exports.create = function(config) {
 			}).then(function(resp) {
 				resp = resp.body;
 				if (resp && resp.domain_record && resp.domain_record.type === 'CNAME') {
-					return true;
+					return resp;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
 			});
@@ -232,7 +232,7 @@ module.exports.create = function(config) {
 			}).then(function(resp) {
 				resp = resp.body;
 				if (resp && resp.domain_record && resp.domain_record.type === 'MX') {
-					return true;
+					return resp;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
 			});
@@ -270,7 +270,7 @@ module.exports.create = function(config) {
 			}).then(function(resp) {
 				resp = resp.body;
 				if (resp && resp.domain_record && resp.domain_record.type === 'NS') {
-					return true;
+					return resp;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
 			});
@@ -300,7 +300,94 @@ module.exports.create = function(config) {
 			}).then(function(resp) {
 				resp = resp.body;
 				if (resp && resp.domain_record && resp.domain_record.type === 'TXT') {
-					return true;
+					return resp;
+				}
+				throw new Error('record did not set. check subdomain, api key, etc');
+			});
+		},
+		createSRVRecord: function(data){
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+			if(!data.host_name){
+				throw new Error('host_name field is required');
+			}
+			if(!data.direct_to){
+				throw new Error('direct_to field is required');
+			}
+			if(!data.priority){
+				throw new Error('priority field is required');
+			}
+			if(!data.port){
+				throw new Error('port field is required');
+			}
+			if(!data.weight){
+				throw new Error('weight field is required');
+			}
+			if(!data.ttl){
+				throw new Error('ttl field is required');
+			}
+
+			return api('POST', '/' + data.zone + '/records', {
+				type: 'SRV',
+				name: (data.host_name),
+				data: (data.direct_to),
+				priority: data.priority,
+				weight: data.weight,
+				port: data.port,
+				flags: data.weight,
+				ttl: data.ttl,
+			}).then(function(resp) {
+				resp = resp.body;
+				if (resp && resp.domain_record && resp.domain_record.type === 'SRV') {
+					return resp;
+				}
+				throw new Error('record did not set. check subdomain, api key, etc');
+			});
+		},
+		createSOARecord: function(data){
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+			if('undefined' === typeof data.mname) {
+				throw new Error('mname field is required');
+			}
+			if('undefined' === typeof data.rname) {
+				throw new Error('rname field is required');
+			}
+			if('undefined' === typeof data.serial) {
+				throw new Error('serial field is required');
+			}
+			if('undefined' === typeof data.refresh) {
+				throw new Error('refresh field is required');
+			}
+			if('undefined' === typeof data.retry) {
+				throw new Error('retry field is required');
+			}
+			if('undefined' === typeof data.expire) {
+				throw new Error('expire field is required');
+			}
+			if('undefined' === typeof data.ttl) {
+				throw new Error('ttl field is required');
+			}
+			/** TODO: do same integer validation for refresh, retry, expire, and maybe serial */
+			if(data.ttl !== null && isNaN(parseInt(data.ttl,10))){
+				throw new Error('ttl field must be a valid integer');
+			}
+
+			return api('POST', '/' + data.zone + '/records', {
+				type: 'SOA',
+				mname: data.mname,
+				rname: data.rname.replace(/@/,'.'),
+				serial: data.serial,
+				refresh: data.refresh,
+				retry: data.retry,
+				expire: data.expire,
+				ttl: data.ttl,
+			}).then(function(resp) {
+				resp = resp.body;
+				if (resp && resp.domain_record && resp.domain_record.type === 'SOA') {
+					return resp;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
 			});

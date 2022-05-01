@@ -8,6 +8,8 @@ let run_caa_record = false;
 let run_ns_record = false;
 let run_cname_record = false;
 let run_txt_record = false;
+let run_soa_record = false;
+let run_srv_record = false;
 let run_all = false;
 
 process.argv.forEach(function(value){
@@ -32,6 +34,12 @@ process.argv.forEach(function(value){
 			break;
 		case 'TXT':
 			run_txt_record = true;
+			break;
+		case 'SOA':
+			run_soa_record = true;
+			break;
+		case 'SRV':
+			run_srv_record = true;
 			break;
 		case 'all':
 			run_all = true;
@@ -84,7 +92,7 @@ api.init({
 	},
 });
 
-if(run_a_record){
+if(run_all || run_a_record){
 	/** Create an 'A' Record */
 	let response = await api.helpers.createARecord({
 		zone: 'wearedoomedarent.we',
@@ -97,7 +105,7 @@ if(run_a_record){
 	console.log({response});
 }
 
-if(run_aaaa_record){
+if(run_all || run_aaaa_record){
 	/** Create an 'A' Record */
 	let response = await api.helpers.createAAAARecord({
 		zone: 'wearedoomedarent.we',
@@ -111,7 +119,7 @@ if(run_aaaa_record){
 }
 
 
-if(run_mx_record){
+if(run_all || run_mx_record){
 	/** Create a 'MX' record */
 	let response = await api.helpers.createMXRecord({
 		zone: 'wearedoomedarent.we',
@@ -125,7 +133,7 @@ if(run_mx_record){
 	console.log({response});
 }
 
-if(run_caa_record){
+if(run_all || run_caa_record){
 	/** Create a 'CAA' record */
 	let response = await api.helpers.createCAARecord({
 		zone: 'wearedoomedarent.we',
@@ -139,7 +147,7 @@ if(run_caa_record){
 	console.log({response});
 }
 
-if(run_ns_record){
+if(run_all || run_ns_record){
 	/** Create a 'NS' record */
 	let response = await api.helpers.createNSRecord({
 		zone: 'wearedoomedarent.we',
@@ -152,7 +160,7 @@ if(run_ns_record){
 	console.log({response});
 }
 
-if(run_cname_record){
+if(run_all || run_cname_record){
 	/** Create a 'CNAME' record */
 	let response = await api.helpers.createCNAMERecord({
 		zone: 'wearedoomedarent.we',
@@ -164,7 +172,7 @@ if(run_cname_record){
 	console.log({response});
 }
 
-if(run_txt_record){
+if(run_all || run_txt_record){
 	/** Create a 'TXT' Record */
 	let response = await api.helpers.createTXTRecord({
 		zone: 'wearedoomedarent.we',
@@ -178,4 +186,38 @@ if(run_txt_record){
 	console.log({response});
 }
 
+//if(run_all || run_soa_record){
+//	/** Create a 'SOA' Record */
+//	let response = await api.helpers.createSOARecord({
+//		zone: 'wearedoomedarent.we',
+//		mname: 'ns.primaryserver.com',
+//		rname: 'admin@example.com',
+//		serial: '1111111111',
+//		refresh: 86400,
+//		retry: 7200,
+//		expire: 4000000,
+//		ttl: 2600,
+//	}).catch(function(error){
+//		console.error({error});
+//	});
+//
+//	console.log({response});
+//}
+
+if(run_all || run_srv_record){
+	/** Create a 'SRV' Record */
+	let response = await api.helpers.createSRVRecord({
+		zone: 'wearedoomedarent.we',
+		host_name: '_service._protocol',
+		direct_to: '@',
+		port: 80,
+		priority: 10,
+		weight: 100,
+		ttl: 43200,
+	}).catch(function(error){
+		console.error({error});
+	});
+
+	console.log({response});
+}
 })();
