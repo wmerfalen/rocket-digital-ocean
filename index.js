@@ -19,7 +19,7 @@ module.exports.create = function(config) {
 				'Content-Type': 'application/json'
 			},
 			json: true,
-			form: form
+			form: form,
 		};
 		return request(req).then(function(resp) {
 			if (2 !== Math.floor(resp.statusCode / 100)) {
@@ -38,6 +38,15 @@ module.exports.create = function(config) {
 	}
 
 	var helpers = {
+		add_dot: function(domain){
+			if(domain === '@'){
+				return '@';
+			}
+			if(!domain.match(/\.$/)){
+				return domain + '.';
+			}
+			return domain;
+		},
 		getZonenames: function(/*opts*/) {
 			// { dnsHosts: [ xxxx.foo.example.com ] }
 			return api('GET', '/').then(function(resp) {
@@ -66,32 +75,30 @@ module.exports.create = function(config) {
 			});
 		},
 		_createATypeRecordRecord: function(data,type) {
-			var ch = data.challenge;
-			var txt = ch.dnsAuthorization;
-			if(!data.name){
-				throw new Error('name field is required');
+			//var ch = data.challenge;
+			//var txt = ch.dnsAuthorization;
+			if(!data.zone){
+				throw new Error('zone field is required');
 			}
 			if(!data.ip){
 				throw new Error('ip field is require');
 			}
+			if(!data.sub_domain){
+				throw new Error('sub_domain field is require');
+			}
 
 			// console.info('Adding A record', data);
-			return api('POST', '/' + ch.dnsZone + '/records', {
+			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
 "type": "A", // or: "type": "AAAA"
 "name": "www",
 "data": "162.10.66.0",
-"priority": null,
-"port": null,
-"ttl": 1800,
-"weight": null,
-"flags": null,
-"tag": null
+"ttl": 1800
 }
 */
 				type: type,
-				name: data.name, //This might be okay too: ch.dnsPrefix,
+				name: data.sub_domain,
 				data: data.ip,
 				priority: ('undefined' === typeof data.priority ? null : data.priority),
 				port: ('undefined' === typeof data.port ? null : data.port),
@@ -101,7 +108,7 @@ module.exports.create = function(config) {
 				tag: ('undefined' === typeof data.tag ? null : data.tag),
 			}).then(function(resp) {
 				resp = resp.body;
-				if (resp && resp.domain_record && resp.domain_record.data === txt) {
+				if (resp && resp.domain_record && resp.domain_record.type === type) {
 					return true;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
@@ -114,13 +121,14 @@ module.exports.create = function(config) {
 			return helpers._createATypeRecordRecord(data,'AAAA');
 		},
 		createCAARecord: function(data){
-			var ch = data.challenge;
-			var txt = ch.dnsAuthorization;
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
 			if(!data.name){
 				throw new Error('name field is required');
 			}
-			if(!data.domain){
-				throw new Error('domain field is required');
+			if(!data.authority){
+				throw new Error('authority field is required');
 			}
 			if('undefined' === typeof data.flags) {
 				data.flags = null;
@@ -136,24 +144,27 @@ module.exports.create = function(config) {
 				throw new Error('tag field must be either null or one of: "issue","issuewild", or "iodef"');
 			}
 
+			console.log(data, data.authority);
 			// console.info('Adding A record', data);
-			return api('POST', '/' + ch.dnsZone + '/records', {
+			return api('POST', '/' + data.zone + '/records', {
 				type: 'CAA',
-				name: data.name, //This might be okay too: ch.dnsPrefix,
-				data: data.domain,
+				name: helpers.add_dot(data.name),
+				data: helpers.add_dot(data.authority),
 				flags: data.flags,
 				tag: data.tag,
+				ttl: 2500,
 			}).then(function(resp) {
 				resp = resp.body;
-				if (resp && resp.domain_record && resp.domain_record.data === txt) {
+				if (resp && resp.domain_record && resp.domain_record.type === 'CAA') {
 					return true;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
 			});
 		},
 		createCNAMERecord: function(data){
-			var ch = data.challenge;
-			var txt = ch.dnsAuthorization;
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
 			if(!data.source_domain){
 				throw new Error('source_domain field is required');
 			}
@@ -162,7 +173,7 @@ module.exports.create = function(config) {
 			}
 
 			// console.info('Adding A record', data);
-			return api('POST', '/' + ch.dnsZone + '/records', {
+			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
 "type": "CNAME",
@@ -171,11 +182,11 @@ module.exports.create = function(config) {
 }
 */
 				type: 'CNAME',
-				name: data.source_domain,
-				data: data.target_domain,
+				name: helpers.add_dot(data.source_domain),
+				data: helpers.add_dot(data.target_domain),
 			}).then(function(resp) {
 				resp = resp.body;
-				if (resp && resp.domain_record && resp.domain_record.data === txt) {
+				if (resp && resp.domain_record && resp.domain_record.type === 'CNAME') {
 					return true;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
@@ -183,8 +194,8 @@ module.exports.create = function(config) {
 		},
 
 		createMXRecord: function(data){
-			var ch = data.challenge;
-			var txt = ch.dnsAuthorization;
+			//var ch = data.challenge;
+			//var txt = ch.dnsAuthorization;
 			if(!data.name){
 				throw new Error('name field is required');
 			}
@@ -199,8 +210,12 @@ module.exports.create = function(config) {
 				throw new Error('priority field is not a valid integer');
 			}
 
+			if(!data.ttl || isNaN(parseInt(data.ttl,10))){
+				throw new Error('ttl field must be a valid integer');
+			}
+
 			// console.info('Adding A record', data);
-			return api('POST', '/' + ch.dnsZone + '/records', {
+			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
 "type": "MX",
@@ -210,12 +225,13 @@ module.exports.create = function(config) {
 }
 */
 				type: 'MX',
-				name: data.name,
-				data: data.mail_exchanger,
+				name: helpers.add_dot(data.name),
+				data: helpers.add_dot(data.mail_exchanger),
 				priority: data.priority,
+				ttl: data.ttl,
 			}).then(function(resp) {
 				resp = resp.body;
-				if (resp && resp.domain_record && resp.domain_record.data === txt) {
+				if (resp && resp.domain_record && resp.domain_record.type === 'MX') {
 					return true;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
@@ -223,9 +239,6 @@ module.exports.create = function(config) {
 		},
 
 		createNSRecord: function(data){
-			/** TODO: FIXME: this function is not complete */
-			var ch = data.challenge;
-			var txt = ch.dnsAuthorization;
 			if(!data.name){
 				throw new Error('name field is required');
 			}
@@ -241,7 +254,7 @@ module.exports.create = function(config) {
 			}
 
 			// console.info('Adding A record', data);
-			return api('POST', '/' + ch.dnsZone + '/records', {
+			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
 "type": "NS",
@@ -251,12 +264,12 @@ module.exports.create = function(config) {
 }
 */
 				type: 'NS',
-				name: data.name,
-				data: data.name_server,
+				name: ['*','@'].includes(data.name) ? data.name : helpers.add_dot(data.name),
+				data: helpers.add_dot(data.name_server),
 				ttl: data.ttl,
 			}).then(function(resp) {
 				resp = resp.body;
-				if (resp && resp.domain_record && resp.domain_record.data === txt) {
+				if (resp && resp.domain_record && resp.domain_record.type === 'NS') {
 					return true;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
@@ -276,6 +289,7 @@ module.exports.create = function(config) {
 			//console.info('Get zones');
 			return helpers.getZonenames(data);
 		},
+		helpers: helpers,
 		set: function(data) {
 			var ch = data.challenge;
 			var txt = ch.dnsAuthorization;
