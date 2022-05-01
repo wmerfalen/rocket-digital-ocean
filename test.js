@@ -1,10 +1,45 @@
 'use strict';
 const process = require('process');
 
-let run_a_record = process.env.RUN_A_RECORD ?? false;
-let run_mx_record = process.env.RUN_MX_RECORD ?? false;
-let run_caa_record = process.env.RUN_CAA_RECORD ?? false;
-let run_ns_record = process.env.RUN_NS_RECORD ?? false;
+let run_a_record = false;
+let run_aaaa_record = false;
+let run_mx_record = false;
+let run_caa_record = false;
+let run_ns_record = false;
+let run_cname_record = false;
+let run_txt_record = false;
+let run_all = false;
+
+process.argv.forEach(function(value){
+	switch(value){
+		case 'A':
+			run_a_record = true;
+			break;
+		case 'AAAA':
+			run_aaaa_record = true;
+			break;
+		case 'MX':
+			run_mx_record = true;
+			break;
+		case 'CAA':
+			run_caa_record = true;
+			break;
+		case 'NS':
+			run_ns_record = true;
+			break;
+		case 'CNAME':
+			run_cname_record = true;
+			break;
+		case 'TXT':
+			run_txt_record = true;
+			break;
+		case 'all':
+			run_all = true;
+			break;
+		default:
+			break;
+	}
+});
 
 (async function(){
 let config = require('./config.js');
@@ -50,7 +85,6 @@ api.init({
 });
 
 if(run_a_record){
-	/** Confirmed this works */
 	/** Create an 'A' Record */
 	let response = await api.helpers.createARecord({
 		zone: 'wearedoomedarent.we',
@@ -63,8 +97,21 @@ if(run_a_record){
 	console.log({response});
 }
 
+if(run_aaaa_record){
+	/** Create an 'A' Record */
+	let response = await api.helpers.createAAAARecord({
+		zone: 'wearedoomedarent.we',
+		sub_domain: 'bruh',
+		ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+	}).catch(function(error){
+		console.error({error});
+	});
+
+	console.log({response});
+}
+
+
 if(run_mx_record){
-	/** Confirmed this works */
 	/** Create a 'MX' record */
 	let response = await api.helpers.createMXRecord({
 		zone: 'wearedoomedarent.we',
@@ -79,7 +126,6 @@ if(run_mx_record){
 }
 
 if(run_caa_record){
-	/** Confirmed this works */
 	/** Create a 'CAA' record */
 	let response = await api.helpers.createCAARecord({
 		zone: 'wearedoomedarent.we',
@@ -103,6 +149,32 @@ if(run_ns_record){
 	}).catch(function(error){
 		console.error({error});
 	});
+	console.log({response});
+}
+
+if(run_cname_record){
+	/** Create a 'CNAME' record */
+	let response = await api.helpers.createCNAMERecord({
+		zone: 'wearedoomedarent.we',
+		source_domain: 'www.example.com',
+		target_domain: 'example.com',
+	}).catch(function(error){
+		console.error({error});
+	});
+	console.log({response});
+}
+
+if(run_txt_record){
+	/** Create a 'TXT' Record */
+	let response = await api.helpers.createTXTRecord({
+		zone: 'wearedoomedarent.we',
+		name: 'wearedoomedarent.we',	// must be equal to, or a subdomain of 'zone'
+		value: 'coolness_level=86',
+		ttl: 32600,
+	}).catch(function(error){
+		console.error({error});
+	});
+
 	console.log({response});
 }
 

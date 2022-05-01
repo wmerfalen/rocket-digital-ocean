@@ -39,8 +39,8 @@ module.exports.create = function(config) {
 
 	var helpers = {
 		add_dot: function(domain){
-			if(domain === '@'){
-				return '@';
+			if(['*','@'].includes(domain)){
+				return domain; // leave untouched
 			}
 			if(!domain.match(/\.$/)){
 				return domain + '.';
@@ -98,7 +98,7 @@ module.exports.create = function(config) {
 }
 */
 				type: type,
-				name: data.sub_domain,
+				name: helpers.add_dot(data.sub_domain),
 				data: data.ip,
 				priority: ('undefined' === typeof data.priority ? null : data.priority),
 				port: ('undefined' === typeof data.port ? null : data.port),
@@ -270,6 +270,36 @@ module.exports.create = function(config) {
 			}).then(function(resp) {
 				resp = resp.body;
 				if (resp && resp.domain_record && resp.domain_record.type === 'NS') {
+					return true;
+				}
+				throw new Error('record did not set. check subdomain, api key, etc');
+			});
+		},
+		createTXTRecord: function(data){
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+			if(!data.name){
+				throw new Error('name field is required');
+			}
+			if(!data.value){
+				throw new Error('value field is required');
+			}
+			if('undefined' === typeof data.ttl) {
+				data.ttl = null;
+			}
+			if(data.ttl !== null && isNaN(parseInt(data.ttl,10))){
+				throw new Error('ttl field must be a valid integer');
+			}
+
+			return api('POST', '/' + data.zone + '/records', {
+				type: 'TXT',
+				name: helpers.add_dot(data.name),
+				data: data.value,
+				ttl: data.ttl,
+			}).then(function(resp) {
+				resp = resp.body;
+				if (resp && resp.domain_record && resp.domain_record.type === 'TXT') {
 					return true;
 				}
 				throw new Error('record did not set. check subdomain, api key, etc');
