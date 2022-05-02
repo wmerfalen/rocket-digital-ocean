@@ -113,8 +113,9 @@ https://github.com/therootcompany/rocket/issues/2
 - `DOA`  (only for apex and delegated domains) *NOT IMPLEMENTED*
 
 ## Running the tests
-Each test is locked behind an environment variable. If you were to run `node ./test.js`, it wouldn't make any calls.
-What you need is a `config.js`:
+`test.js` accepts a variety of options to specify which tests you'd like to run.
+But first, you must make sure your config.js file is sane:
+
 1. copy it
 ```sh
 cp ./config.example.js config.js
@@ -122,14 +123,9 @@ cp ./config.example.js config.js
 2. edit the token to be your digital ocean API key
 3. Choose from one or more of the available tests:
 ```sh
-node ./test.js A AAAA CAA CNAME NS MX SRV TXT
+node ./test.js A AAAA CAA CNAME NS MX SRV TXT list
 ```
-As you might have guessed, each environment variable coressponds to a specific test. If you copied and pasted
-the script above, it would run every test. Of course, you can pick and choose which tests you'd like to run.
-
-OR
-
-## Run every test
+Each argument to `test.js` tells the script which test to run. If you'd like to run all tests, simply run:
 ```sh
 node ./test.js all
 ```
