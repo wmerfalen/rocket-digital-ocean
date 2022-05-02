@@ -2,7 +2,43 @@
 This project is part of the initiative set by `therootcompany` and their Rocket API.
 https://github.com/therootcompany/rocket/issues/2
 
-## Digital Ocean API
+## List of implemented features
+### Create
+[x] - A
+[x] - AAAA
+[ ] - ANAME (not available for digital ocean)
+[x] - CAA
+[x] - CNAME
+[x] - MX
+[x] - TXT
+[x] - SRV
+[x] - NS (only available for apex and delegated domains)
+[ ] - DOA (only available for apex and delegated domains)
+
+### Read
+[x] - List all records
+		listAll(data)
+			- data.zone: *REQUIRED*
+[x] - Follow pagination
+		listByPaginatedLink(link)
+			- link is the paginated link found in body.links.pages.next
+[x] - List by record type,name, or both
+		listByType(data)
+			- data.zone: *REQUIRED*
+			- data.type: *REQUIRED*
+		listByName(data)
+			- data.zone: *REQUIRED*
+			- data.name: *REQUIRED* if not set, data.zone is used
+		listByNameAndType(data)
+			- data.zone: *REQUIRED*
+			- data.name: *REQUIRED* if not set, data.zone is used
+			- data.type: *REQUIRED*
+[x] - list by record 'id' (assigned by digital ocean server side code to identify successfully saved records)
+		getById(data)
+			- data.zone: *REQUIRED*
+			- data.id: *REQUIRED*
+
+## CREATE Functions
 - `helpers.createARecord(data);`
 	- `data.zone`: the domain name you'd like to apply this A record to. i.e.: 'wearedoomedarentwe.com', *REQUIRED*
 	- `data.sub_domain`: the sub domain. i.e.: 'www', *REQUIRED*
@@ -35,11 +71,6 @@ https://github.com/therootcompany/rocket/issues/2
 	- `data.name`: the host name as FQDN or a subdomain. if subdomain, it's just 'www' instead of 'www.domain.com'  *REQUIRED*
 	- `data.name_server`: the name server as FQDN. i.e.: ns1.coolaj86.com  *REQUIRED*
 	- `data.ttl`: the ttl. must be a valid integer *REQUIRED*
-
-- `helpers.createCNAMERecord(data);`
-	- `data.zone`: *REQUIRED*
-	- `data.source_domain`: the source domain *REQUIRED*
-	- `data.target_domain`: the domain which will be an alias of `source_domain` *REQUIRED*
 
 - `helpers.createTXTRecord(data);`
 	- `data.zone`: *REQUIRED*

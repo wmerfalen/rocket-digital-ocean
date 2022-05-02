@@ -9,6 +9,7 @@ module.exports.create = function(config) {
 	var baseUrl = (config.baseUrl || defaults.baseUrl).replace(/\/$/, '');
 	var authtoken = config.token;
 	var request;
+	var recordTypes = ['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NS', 'TXT', 'SRV', 'SOA',];
 
 	function api(method, path, form) {
 		var req = {
@@ -18,7 +19,7 @@ module.exports.create = function(config) {
 				Authorization: 'Bearer ' + authtoken,
 				'Content-Type': 'application/json'
 			},
-			json: true,
+			json: (null === form || 'undefined' === typeof form) ? false : true,
 			form: form,
 		};
 		return request(req).then(function(resp) {
@@ -33,6 +34,25 @@ module.exports.create = function(config) {
 				console.error();
 				throw new Error('Error response. Check token, baseUrl, domains, etc.');
 			}
+			return resp;
+		});
+	}
+	function rawApi(method,url,form){
+		var req = {
+			method: method,
+			url: url,
+			headers: {
+				Authorization: 'Bearer ' + authtoken,
+			},
+			json: false,
+		};
+		let is_json = (null === form || 'undefined' === typeof form) ? false : true;
+		if(is_json){
+			req.headers['Content-Type'] = 'application/json';
+			req.form = form;
+			req.json = true;
+		}
+		return request(req).then(function(resp) {
 			return resp;
 		});
 	}
@@ -74,6 +94,81 @@ module.exports.create = function(config) {
 				return entries && entries[0];
 			});
 		},
+		listAll: function(data) {
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+
+			return api('GET', '/' + data.zone + '/records', null).then(function(resp) {
+				return resp;
+			});
+		},
+		listByPaginatedLink: function(link) {
+			return rawApi('GET', link, null).then(function(resp) {
+				return resp;
+			});
+		},
+		listByType: function(data) {
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+			if(!data.type){
+				throw new Error('type field is require');
+			}
+			if(!recordTypes.includes(data.type)){
+				throw new Error('unrecognized record type. Record types must be one of: ' + recordTypes.join(','));
+			}
+
+			return api('GET', '/' + data.zone + '/records?type=' + data.type, null).then(function(resp) {
+				return resp;
+			});
+		},
+		listByName: function(data) {
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+			if(!data.name){
+				data.name = data.zone;
+			}
+			// FIXME: use the URL formatting facilities that are native to node and js
+			return api('GET', '/' + data.zone + '/records?name=' + data.name, null).then(function(resp) {
+				return resp;
+			});
+		},
+		listByNameAndType: function(data) {
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+			if(!data.type){
+				throw new Error('type field is required');
+				
+			}
+			if(!recordTypes.includes(data.type)){
+				throw new Error('unrecognized record type. Record types must be one of: ' + recordTypes.join(','));
+			}
+
+			if(!data.name){
+				data.name = data.zone;
+			}
+
+			// FIXME: use the URL formatting facilities that are native to node and js
+			return api('GET', '/' + data.zone + '/records?type=' + data.type + '&name=' + data.name, null).then(function(resp) {
+				return resp;
+			});
+		},
+		getById: function(data) {
+			if(!data.zone){
+				throw new Error('zone field is required');
+			}
+			if(!data.id){
+				throw new Error('id field is required');
+				
+			}
+			// FIXME: use the URL formatting facilities that are native to node and js
+			return api('GET', '/' + data.zone + '/records/' + data.id, null).then(function(resp) {
+				return resp;
+			});
+		},
 		_createATypeRecordRecord: function(data,type) {
 			//var ch = data.challenge;
 			//var txt = ch.dnsAuthorization;
@@ -87,7 +182,6 @@ module.exports.create = function(config) {
 				throw new Error('sub_domain field is require');
 			}
 
-			// console.info('Adding A record', data);
 			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
@@ -144,8 +238,6 @@ module.exports.create = function(config) {
 				throw new Error('tag field must be either null or one of: "issue","issuewild", or "iodef"');
 			}
 
-			console.log(data, data.authority);
-			// console.info('Adding A record', data);
 			return api('POST', '/' + data.zone + '/records', {
 				type: 'CAA',
 				name: helpers.add_dot(data.name),
@@ -172,7 +264,6 @@ module.exports.create = function(config) {
 				throw new Error('target_domain field is required');
 			}
 
-			// console.info('Adding A record', data);
 			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
@@ -214,7 +305,6 @@ module.exports.create = function(config) {
 				throw new Error('ttl field must be a valid integer');
 			}
 
-			// console.info('Adding A record', data);
 			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
@@ -253,7 +343,6 @@ module.exports.create = function(config) {
 				throw new Error('ttl field is not a valid integer');
 			}
 
-			// console.info('Adding A record', data);
 			return api('POST', '/' + data.zone + '/records', {
 /** Example payload
 {
@@ -403,7 +492,6 @@ module.exports.create = function(config) {
 			return null;
 		},
 		zones: function(data) {
-			//console.info('Get zones');
 			return helpers.getZonenames(data);
 		},
 		helpers: helpers,
@@ -411,7 +499,6 @@ module.exports.create = function(config) {
 			var ch = data.challenge;
 			var txt = ch.dnsAuthorization;
 
-			// console.info('Adding TXT', data);
 			return api('POST', '/' + ch.dnsZone + '/records', {
 				type: 'TXT',
 				name: ch.dnsPrefix,
@@ -455,7 +542,6 @@ module.exports.create = function(config) {
 		get: function(data) {
 			var ch = data.challenge;
 
-			// console.info('Fetching TXT', data);
 			var payload = {
 				dnsPrefix: ch.dnsPrefix,
 				zone: ch.dnsZone,

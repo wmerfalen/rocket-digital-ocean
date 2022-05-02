@@ -11,6 +11,7 @@ let run_txt_record = false;
 let run_soa_record = false;
 let run_srv_record = false;
 let run_all = false;
+let run_list_record_by_type = false;
 
 process.argv.forEach(function(value){
 	switch(value){
@@ -41,6 +42,9 @@ process.argv.forEach(function(value){
 		case 'SRV':
 			run_srv_record = true;
 			break;
+		case 'list':
+			run_list_record_by_type = true;
+			break;
 		case 'all':
 			run_all = true;
 			break;
@@ -50,6 +54,7 @@ process.argv.forEach(function(value){
 });
 
 (async function(){
+var dump = function(response){ console.log(JSON.stringify(response,null,2)); };
 let config = require('./config.js');
 
 const ocean = require('./index.js');
@@ -59,25 +64,27 @@ api.init({
 	request: async function(req){
 
 		return new Promise((resolve, reject) => {
-			console.log({req});
+			console.info([req.method, ' ', req.url].join(''));
 			let buffer = '';
 			const https = require('https');
 			let stream = https.request(req.url,{
 				method: req.method,
 				headers: req.headers,
 			}, function(res){
-				console.log(`STATUS: ${res.statusCode}`);
-				console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+				//console.debug(`STATUS: ${res.statusCode}`);
+				//console.debug(`HEADERS: ${JSON.stringify(res.headers)}`);
 				res.setEncoding('utf8');
 				res.on('data', (chunk) => {
-					resolve({
-						statusCode: res.statusCode,
-						body: JSON.parse(chunk),
-					});
-					console.log(`BODY: ${chunk}`);
+					//console.debug(`BODY: ${chunk}`);
+					buffer += chunk.toString();
 				});
 				res.on('end', () => {
-					console.log('No more data in response.');
+					//console.debug({'res.on buffer': buffer});
+					resolve({
+						statusCode: res.statusCode,
+						body: JSON.parse(buffer),
+					});
+					//console.debug('No more data in response.');
 				});
 			});
 
@@ -86,7 +93,9 @@ api.init({
 				reject(`problem with request: ${e.message}`);
 			});
 
-			stream.write(JSON.stringify(req.form));
+			if(req.json){
+				stream.write(JSON.stringify(req.form));
+			}
 			stream.end();
 		});
 	},
@@ -102,7 +111,7 @@ if(run_all || run_a_record){
 		console.error({error});
 	});
 
-	console.log({response});
+	dump(response);
 }
 
 if(run_all || run_aaaa_record){
@@ -115,7 +124,7 @@ if(run_all || run_aaaa_record){
 		console.error({error});
 	});
 
-	console.log({response});
+	dump(response);
 }
 
 
@@ -130,7 +139,7 @@ if(run_all || run_mx_record){
 	}).catch(function(error){
 		console.error({error});
 	});
-	console.log({response});
+	dump(response);
 }
 
 if(run_all || run_caa_record){
@@ -144,7 +153,7 @@ if(run_all || run_caa_record){
 	}).catch(function(error){
 		console.error({error});
 	});
-	console.log({response});
+	dump(response);
 }
 
 if(run_all || run_ns_record){
@@ -157,7 +166,7 @@ if(run_all || run_ns_record){
 	}).catch(function(error){
 		console.error({error});
 	});
-	console.log({response});
+	dump(response);
 }
 
 if(run_all || run_cname_record){
@@ -169,7 +178,7 @@ if(run_all || run_cname_record){
 	}).catch(function(error){
 		console.error({error});
 	});
-	console.log({response});
+	dump(response);
 }
 
 if(run_all || run_txt_record){
@@ -183,7 +192,7 @@ if(run_all || run_txt_record){
 		console.error({error});
 	});
 
-	console.log({response});
+	dump(response);
 }
 
 //if(run_all || run_soa_record){
@@ -201,7 +210,7 @@ if(run_all || run_txt_record){
 //		console.error({error});
 //	});
 //
-//	console.log({response});
+//	dump(response);
 //}
 
 if(run_all || run_srv_record){
@@ -218,6 +227,82 @@ if(run_all || run_srv_record){
 		console.error({error});
 	});
 
-	console.log({response});
+	dump(response);
 }
+
+if(run_all || run_list_record_by_type){
+	/**
+	 * List ALL records
+	 */
+	let response = await api.helpers.listAll({
+		zone: 'wearedoomedarent.we',
+	}).catch(function(error){
+		console.error({error});
+	});
+	dump(response);
+
+	let next_page_url = response.body.links?.pages?.next;
+	if('undefined' !== typeof next_page_url){
+		//console.debug({next_page_url});
+		let pagedResponse = await api.helpers.listByPaginatedLink(next_page_url).catch(function(error){
+			console.error({error});
+		});
+		dump(pagedResponse);
+	}
+
+	let available_records = [];
+	let domain_set = {};
+
+	if(response && (response.statusCode ?? 0) === 200){
+		if(response.body.domain_records.length){
+			available_records = response.body.domain_records.map(function(value){
+				domain_set[value.name] = value;
+				return {
+					id: value.id,
+					type: value.type,
+					name: value.name,
+				};
+			});
+		}
+	}
+	let domain_names = Object.keys(domain_set);
+	let domain = domain_names[0];
+	let record_type = domain_set[domain].type;
+
+	/**
+	 * List records by 'A' type
+	 */
+	response = await api.helpers.listByType({
+		zone: 'wearedoomedarent.we',
+		type: 'A',
+	}).catch(function(error){
+		console.error({error});
+	});
+
+	dump(response);
+
+	/**
+	 * List records by 'wearedoomedarent.we' domain name
+	 */
+	response = await api.helpers.listByName({
+		zone: 'wearedoomedarent.we',
+	}).catch(function(error){
+		console.error({error});
+	});
+
+	dump(response);
+
+	/**
+	 * List records by 'wearedoomedarent.we' domain name and 'A' type
+	 */
+	response = await api.helpers.listByNameAndType({
+		zone: 'wearedoomedarent.we',
+		type: record_type,
+	}).catch(function(error){
+		console.error({error});
+	});
+
+	dump(response);
+}
+
 })();
