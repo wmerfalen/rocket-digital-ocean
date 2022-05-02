@@ -3,7 +3,7 @@ This project is part of the initiative set by `therootcompany` and their Rocket 
 https://github.com/therootcompany/rocket/issues/2
 
 ## Digital Ocean API
-(DNS API Docs)[https://docs.digitalocean.com/reference/api/api-reference/#operation/create_domain_record]
+[DNS API Docs](https://docs.digitalocean.com/reference/api/api-reference/#operation/create_domain_record)
 
 ## List of supported record types
 - [x] A
