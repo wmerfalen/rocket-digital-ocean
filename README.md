@@ -17,25 +17,25 @@ https://github.com/therootcompany/rocket/issues/2
 ### READ Functions
 - [x]  List all records
 	- listAll(data)
-		- data.zone: *REQUIRED*
+		- `data.zone`: *REQUIRED*
 - [x]  Follow pagination
 	- listByPaginatedLink(link)
 		- link is the paginated link found in body.links.pages.next
 - [x] List by record type,name, or both
 	- listByType(data)
-		- data.zone: *REQUIRED*
-		- data.type: *REQUIRED*
+		- `data.zone`: *REQUIRED*
+		- `data.type`: *REQUIRED*
 	- listByName(data)
-		- data.zone: *REQUIRED*
-		- data.name: *REQUIRED* if not set, data.zone is used
+		- `data.zone`: *REQUIRED*
+		- `data.name`: *REQUIRED* if not set, `data.zone` is used
 	- listByNameAndType(data)
-		- data.zone: *REQUIRED*
-		- data.name: *REQUIRED* if not set, data.zone is used
-		- data.type: *REQUIRED*
+		- `data.zone`: *REQUIRED*
+		- `data.name`: *REQUIRED* if not set, `data.zone` is used
+		- `data.type`: *REQUIRED*
 - [x] list by record 'id' (assigned by digital ocean server side code to identify successfully saved records)
 	- getById(data)
-		- data.zone: *REQUIRED*
-		- data.id: *REQUIRED*
+		- `data.zone`: *REQUIRED*
+		- `data.id`: *REQUIRED*
 
 ### UPDATE Functions
 - [ ] Update by record ID
@@ -142,7 +142,7 @@ node ./test.js all
 	- Basic tests as examples for how to use the library
 
 # This code is based on
-[The Root Company's ACME DNS implementation](https://git.coolaj86.com/coolaj86/acme-dns-01-digitalocean.js/src/branch/master/lib/index.js)
+The Root Company's ACME DNS [implementation](https://git.coolaj86.com/coolaj86/acme-dns-01-digitalocean.js/src/branch/master/lib/index.js)
 
 # Authors
 - William Merfalen
@@ -159,4 +159,4 @@ node ./test.js all
 	- Website: (https://aneem.com.np)
 
 # License
-The code that this repo is based on used the following license: (https://git.coolaj86.com/coolaj86/acme-dns-01-digitalocean.js/src/commit/9f86ee8d32dc45d998c10e46178eeb3e3a870fe8/LICENSE)
+The code that this repo is based on used the following license: [LICENSE](https://git.coolaj86.com/coolaj86/acme-dns-01-digitalocean.js/src/commit/9f86ee8d32dc45d998c10e46178eeb3e3a870fe8/LICENSE)
