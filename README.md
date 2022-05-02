@@ -16,26 +16,26 @@ https://github.com/therootcompany/rocket/issues/2
 
 ### READ Functions
 - [x]  List all records
-		listAll(data)
-			- data.zone: *REQUIRED*
+	- listAll(data)
+		- data.zone: *REQUIRED*
 - [x]  Follow pagination
-		listByPaginatedLink(link)
-			- link is the paginated link found in body.links.pages.next
+	- listByPaginatedLink(link)
+		- link is the paginated link found in body.links.pages.next
 - [x] List by record type,name, or both
-		listByType(data)
-			- data.zone: *REQUIRED*
-			- data.type: *REQUIRED*
-		listByName(data)
-			- data.zone: *REQUIRED*
-			- data.name: *REQUIRED* if not set, data.zone is used
-		listByNameAndType(data)
-			- data.zone: *REQUIRED*
-			- data.name: *REQUIRED* if not set, data.zone is used
-			- data.type: *REQUIRED*
+	- listByType(data)
+		- data.zone: *REQUIRED*
+		- data.type: *REQUIRED*
+	- listByName(data)
+		- data.zone: *REQUIRED*
+		- data.name: *REQUIRED* if not set, data.zone is used
+	- listByNameAndType(data)
+		- data.zone: *REQUIRED*
+		- data.name: *REQUIRED* if not set, data.zone is used
+		- data.type: *REQUIRED*
 - [x] list by record 'id' (assigned by digital ocean server side code to identify successfully saved records)
-		getById(data)
-			- data.zone: *REQUIRED*
-			- data.id: *REQUIRED*
+	- getById(data)
+		- data.zone: *REQUIRED*
+		- data.id: *REQUIRED*
 
 ### UPDATE Functions
 - [ ] Update by record ID
